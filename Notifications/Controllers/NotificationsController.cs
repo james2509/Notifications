@@ -26,6 +26,10 @@ namespace Notifications.Controllers
             this.notificationsService = notificationsService;
         }
 
+        /// <summary>
+        /// Api that returns all notifications stored or just notifcations
+        /// for a specfic User
+        /// </summary>
         [HttpGet]
         public IReadOnlyCollection<NotificationModel> Get(string userEmail)
         {
@@ -35,6 +39,9 @@ namespace Notifications.Controllers
             return notificationsService.GetAllNotifications();
         }
 
+        /// <summary>
+        /// Api to Create a notification event
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Create([FromForm]NotificationEvent notification)
         {

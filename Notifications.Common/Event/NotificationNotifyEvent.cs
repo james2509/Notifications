@@ -9,6 +9,11 @@ using Notifications.Common.Models;
 
 namespace Notifications.Common.Event
 {
+    /// <summary>
+    /// Event class to handle raising notification events when notifications
+    /// are created. This should be refactored so that Client and Connections
+    /// are moved to a Context class to keep the Hub connection alive.
+    /// </summary>
     public class NotificationNotifyEvent : INotificationNotifyEvent
     {
         public Func<NotificationModel, Task<bool>> NotifyFunctionAsync { get; set; }

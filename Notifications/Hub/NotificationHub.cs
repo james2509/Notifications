@@ -26,11 +26,10 @@ namespace Notifications.Hub
             notificationNotify.NotifyFunctionAsync = async model => await NotifyAsync(model);
         }
 
-        public override Task OnConnectedAsync()
-        {
-            return base.OnConnectedAsync();
-        }
-
+        /// <summary>
+        /// A message is sent once a User starts a web socket session. This wil get all notifications for
+        /// the User and send them on.
+        /// </summary>
         public async Task initial(string userEmail)
         {
             notificationNotify.Client = Clients;
@@ -64,13 +63,23 @@ namespace Notifications.Hub
             }
         }
 
+        /// <summary>
+        /// Send a notification to a specific user if they have a web socket connection
+        /// </summary>
         private async Task<bool> NotifyAsync(NotificationModel notification)
         {
             try
             {
-                var connectionId = notificationNotify.Connections[notification.User.Email];
-                var nJson = JsonConvert.SerializeObject(notification);
-                await notificationNotify.Client.Client(connectionId).SendAsync("ReceiveNotifications", nJson);
+                if (notificationNotify.Connections.ContainsValue(notification.User.Email))
+                {
+                    var connectionId = notificationNotify.Connections[notification.User.Email];
+                    var nJson = JsonConvert.SerializeObject(notification);
+                    await notificationNotify.Client.Client(connectionId).SendAsync("ReceiveNotifications", nJson);
+                }
+                else
+                {
+                    logger.LogVerbose($"No web socket sessions for User {notification.User.Email}");
+                }
             }
             catch (Exception e)
             {
