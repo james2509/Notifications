@@ -8,6 +8,7 @@ When a user logs in, the user will fetch all of their notifications. A socket is
 A blank database will need to created. 
 
 The SQL server connection string needs to be updated in the appsettings.json file. The settings file should look like;
+~~~~
 {
   "Logging": {
     "LogLevel": {
@@ -17,6 +18,7 @@ The SQL server connection string needs to be updated in the appsettings.json fil
   "SqlConnectionString": "YOUR_SQL_SERVER_CONNECTIOn_STRING",
   "AllowedHosts": "*"
 }
+~~~~
 
 Once the connection string has been updated an EF Migration will need to be run. Open the solution up in Visual Studio and run Update-Database from the package manager console. 
 
@@ -31,10 +33,12 @@ This will also seed the following data:
 * GET https://host/api/notifications returns all notifcation
 * GET https://host/api/notifications?userEmail=james@test.com returns all notifications for the user james@test.com
 * POST https://host/api/notifications passing a payload in the following structure will add a notification and boradcast to the user if they have a socket connection:
+~~~~
 {
 	"UserId": "james@test.com",
 	"Data": {"AppointmentDateTime":"2020-04-17T17:24:01.5121422+00:00","OrganisationName":"Pinky Ponk","Reason":"Not working today"},
 	"NotificationType": 1
 }
+~~~~
 
 
