@@ -1,4 +1,5 @@
 # Notifications Microservice - Scenario
+The Notifications microservice was built in Visual Studio 2017 and development database hosted on a SQL Azure database.
 
 The Notifications microservice manages user notifications. It responds to system wide events and depending on the type of event it will generate a new user notification and store it in its store. 
 
