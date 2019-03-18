@@ -1,0 +1,84 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json;
+using Notifications.Common.Interfaces;
+using Notifications.Common.Models;
+
+namespace Notifications.Hub
+{
+    public class NotificationHub : Microsoft.AspNetCore.SignalR.Hub
+    {
+        private readonly INotificationsService notificationsService;
+        private readonly INotificationNotifyEvent notificationNotify;
+        private readonly INotificationsLogger logger;
+
+        public NotificationHub(INotificationsService notificationsService, INotificationNotifyEvent notificationNotify, INotificationsLogger logger)
+        {
+            this.notificationsService = notificationsService;
+            this.notificationNotify = notificationNotify;
+            this.logger = logger;
+
+            
+            notificationNotify.NotifyFunctionAsync = async model => await NotifyAsync(model);
+        }
+
+        public override Task OnConnectedAsync()
+        {
+            return base.OnConnectedAsync();
+        }
+
+        public async Task initial(string userEmail)
+        {
+            notificationNotify.Client = Clients;
+            try
+            {
+                if (notificationNotify.Connections.ContainsKey(userEmail))
+                {
+                    notificationNotify.Connections[userEmail] = Context.ConnectionId;
+                    logger.LogVerbose($"Connection for {userEmail} changed to Id: {Context.ConnectionId.ToString()}");
+                }
+                else
+                {
+                    logger.LogVerbose($"Connection for {userEmail} established with Id: {Context.ConnectionId.ToString()}");
+                    notificationNotify.Connections.Add(userEmail, Context.ConnectionId);
+                }
+
+                var notifications = notificationsService.GetUserNotifications(userEmail);
+
+                if (notifications != null && notifications.Count > 0)
+                {
+                    foreach (var n in notifications)
+                    {
+                        var nJson = JsonConvert.SerializeObject(n);
+                        await notificationNotify.Client.Caller.SendAsync("ReceiveNotifications", nJson);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogException(e);
+            }
+        }
+
+        private async Task<bool> NotifyAsync(NotificationModel notification)
+        {
+            try
+            {
+                var connectionId = notificationNotify.Connections[notification.User.Email];
+                var nJson = JsonConvert.SerializeObject(notification);
+                await notificationNotify.Client.Client(connectionId).SendAsync("ReceiveNotifications", nJson);
+            }
+            catch (Exception e)
+            {
+                logger.LogException(e);
+                return false;
+            }
+
+            return true;
+        }
+    }
+}

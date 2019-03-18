@@ -29,7 +29,10 @@ namespace Notifications.Tests.Services.Actions
             clock = new FakeClock();
             dbDataMother = new NotificationsDbDataMother(clock);
             notificationsAccess = new NotificationsAccess(dbDataMother.Db, clock);
-            action = new CreateNotificationDatabaseCreateAction(notificationsAccess);
+
+            INotificationNotifyEvent notifyEvent = new FakeNotifyEvent();
+
+            action = new CreateNotificationDatabaseCreateAction(notificationsAccess, notifyEvent);
         }
 
         [Fact]

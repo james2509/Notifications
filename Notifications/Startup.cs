@@ -11,12 +11,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Notifications.Common.Event;
 using Notifications.Common.Interfaces;
 using Notifications.Common.TestAbstractions;
 using Notifications.DataAccess;
 using Notifications.DataAccess.Access;
+using Notifications.Hub;
 using Notifications.Services;
 using Swashbuckle.AspNetCore.Swagger;
+using Notifications.Common.Loggers;
 
 namespace Notifications
 {
@@ -32,7 +35,7 @@ namespace Notifications
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "NotificationsAPI", Version = "v1" });
@@ -45,6 +48,10 @@ namespace Notifications
             services.AddTransient<INotificationsAccess, NotificationsAccess>();
             services.AddTransient<INotificationsService, NotificationsService>();
             services.AddTransient<IClock, Clock>();
+            services.AddScoped<INotificationsLogger, NotificationsConsoleLogger>();
+            services.AddSingleton<INotificationNotifyEvent, NotificationNotifyEvent>();
+
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -67,6 +74,11 @@ namespace Notifications
 
             app.UseHttpsRedirection();
             app.UseMvc();
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<NotificationHub>("/notificationhub");
+            });
         }
     }
 }

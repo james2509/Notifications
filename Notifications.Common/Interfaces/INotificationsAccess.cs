@@ -14,6 +14,6 @@ namespace Notifications.Common.Interfaces
 
         void CreateNotification(NotificationCreateModel notification);
 
-        Task CreateNotificationAsync(NotificationCreateModel notification);
+        Task<NotificationCreateModel> CreateNotificationAsync(NotificationCreateModel notification);
     }
 }

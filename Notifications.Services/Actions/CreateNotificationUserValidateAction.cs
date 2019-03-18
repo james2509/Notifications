@@ -11,10 +11,12 @@ namespace Notifications.Services.Actions
     public class CreateNotificationUserValidateAction : ICreateNotificationAction
     {
         private readonly INotificationsAccess notificationAccess;
+        private readonly INotificationNotifyEvent notificationNotify;
 
-        public CreateNotificationUserValidateAction(INotificationsAccess notificationAccess)
+        public CreateNotificationUserValidateAction(INotificationsAccess notificationAccess, INotificationNotifyEvent notificationNotify)
         {
             this.notificationAccess = notificationAccess;
+            this.notificationNotify = notificationNotify;
         }
 
         public int Order => 1;

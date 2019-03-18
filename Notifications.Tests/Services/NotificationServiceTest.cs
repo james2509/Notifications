@@ -19,14 +19,18 @@ namespace Notifications.Tests.Services
         private readonly NotificationsDbDataMother dbDataMother;
         private readonly INotificationsAccess notificationsAccess;
         private readonly INotificationsService notificationsService;
+        private readonly INotificationNotifyEvent notifyEvent;
+        private readonly INotificationsLogger logger;
         private readonly FakeClock clock;
 
         public NotificationServiceTest()
         {
             clock = new FakeClock();
+            notifyEvent = new FakeNotifyEvent();
+            logger = new FakeLogger();
             dbDataMother = new NotificationsDbDataMother(clock);
             notificationsAccess = new NotificationsAccess(dbDataMother.Db, clock);
-            notificationsService = new NotificationsService(notificationsAccess);
+            notificationsService = new NotificationsService(notificationsAccess, notifyEvent, logger);
         }
 
         [Fact]

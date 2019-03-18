@@ -53,7 +53,7 @@ namespace Notifications.DataAccess.Access
             CreateNotificationAsync(notification).Wait();
         }
 
-        public async Task CreateNotificationAsync(NotificationCreateModel notification)
+        public async Task<NotificationCreateModel> CreateNotificationAsync(NotificationCreateModel notification)
         {
             var user = await dbContext.NotificationUsers.FirstOrDefaultAsync(u =>
                 String.Compare(notification.UserEmail, u.Email, true) == 0);
@@ -74,6 +74,9 @@ namespace Notifications.DataAccess.Access
 
             await dbContext.Notifications.AddAsync(notificationEntity);
             await dbContext.SaveChangesAsync();
+            notification.Id = notificationEntity.Id;
+
+            return notification;
         }
     }
 }

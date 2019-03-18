@@ -9,6 +9,8 @@ namespace Notifications.Common.Models
 {
     public class NotificationCreateModel
     {
+        public Guid Id { get; set; }
+
         public string UserEmail { get; set; }
 
         public NotificationTypeEnum NotificationType { get; set; }

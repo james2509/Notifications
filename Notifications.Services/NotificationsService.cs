@@ -6,16 +6,21 @@ using System.Threading.Tasks;
 using Notifications.Common.Interfaces;
 using Notifications.Common.Models;
 using Notifications.Services.Interfaces;
+using Notifications.Services.Builders;
 
 namespace Notifications.Services
 {
     public class NotificationsService : INotificationsService
     {
         private readonly INotificationsAccess notificationsAccess;
+        private readonly INotificationNotifyEvent notificationNotify;
+        private readonly INotificationsLogger logger;
 
-        public NotificationsService(INotificationsAccess notificationsAccess)
+        public NotificationsService(INotificationsAccess notificationsAccess, INotificationNotifyEvent notificationNotify, INotificationsLogger logger)
         {
             this.notificationsAccess = notificationsAccess;
+            this.notificationNotify = notificationNotify;
+            this.logger = logger;
         }
 
         public IReadOnlyCollection<NotificationModel> GetAllNotifications()
@@ -33,20 +38,20 @@ namespace Notifications.Services
 
         private IReadOnlyCollection<NotificationModel> BuildNotifications(IEnumerable<NotificationModel> notifications)
         {
-            var builders = LoadBuilders();
+            var builders = NotificaionBuilder.LoadBuilders();
             var notificationTemplates = notificationsAccess.GetAllNotificationTemplates().ToList();
             var readonlyNotifications = new List<NotificationModel>();
 
-            foreach (var notification in notifications)
+            try
             {
-                var template =
-                    notificationTemplates.FirstOrDefault(t => t.NotificationType == notification.NotificationType);
-
-                if (template == null)
-                    throw new ArgumentNullException("Template", "Missing template");
-
-                var builder = builders.First(b => b.BuilderName == template.BuilderClass);
-                readonlyNotifications.Add(builder.Build(notification, template));
+                foreach (var notification in notifications)
+                {
+                    readonlyNotifications.Add(NotificaionBuilder.BuildNotification(notification, builders, notificationTemplates));
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogException(e);
             }
 
             return readonlyNotifications.AsReadOnly();
@@ -54,21 +59,20 @@ namespace Notifications.Services
 
         public async Task CreateNotificationAsync(NotificationCreateModel notification)
         {
-            var actions = LoadCreateActions().OrderBy(o => o.Order);
-
-            foreach (var action in actions)
+            try
             {
-                await action.Run(notification);
-            }
-        }
+                var actions = LoadCreateActions().OrderBy(o => o.Order);
 
-        private List<INotificationBuilder> LoadBuilders()
-        {
-            var builderInterface = typeof(INotificationBuilder);
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(x => x.GetTypes())
-                .Where(x => builderInterface.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
-                .Select(x => Activator.CreateInstance(x) as INotificationBuilder).ToList();
+                foreach (var action in actions)
+                {
+                    await action.Run(notification);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogException(e);
+            }
+
         }
 
         private List<ICreateNotificationAction> LoadCreateActions()
@@ -77,7 +81,7 @@ namespace Notifications.Services
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(x => x.GetTypes())
                 .Where(x => createActionInterface.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
-                .Select(x => Activator.CreateInstance(x, notificationsAccess) as ICreateNotificationAction)
+                .Select(x => Activator.CreateInstance(x, notificationsAccess, notificationNotify) as ICreateNotificationAction)
                 .OrderBy(o => o.Order)
                 .ToList();
         }
