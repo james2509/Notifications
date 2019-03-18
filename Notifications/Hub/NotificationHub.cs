@@ -22,7 +22,6 @@ namespace Notifications.Hub
             this.notificationNotify = notificationNotify;
             this.logger = logger;
 
-            
             notificationNotify.NotifyFunctionAsync = async model => await NotifyAsync(model);
         }
 
@@ -70,15 +69,12 @@ namespace Notifications.Hub
         {
             try
             {
-                if (notificationNotify.Connections.ContainsValue(notification.User.Email))
+                string connectionId = String.Empty;
+                if (notificationNotify.Connections.TryGetValue(notification.User.Email, out connectionId))
                 {
-                    var connectionId = notificationNotify.Connections[notification.User.Email];
+                    connectionId = notificationNotify.Connections[notification.User.Email];
                     var nJson = JsonConvert.SerializeObject(notification);
                     await notificationNotify.Client.Client(connectionId).SendAsync("ReceiveNotifications", nJson);
-                }
-                else
-                {
-                    logger.LogVerbose($"No web socket sessions for User {notification.User.Email}");
                 }
             }
             catch (Exception e)
